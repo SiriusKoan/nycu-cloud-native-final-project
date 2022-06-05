@@ -4,7 +4,7 @@ metadata:
   name: crawler-deployment
   labels:
     app: crawler
-  namespace: test
+  namespace: cloudnative
 spec:
   replicas: 1
   selector:

@@ -15,19 +15,9 @@ spec:
       labels:
         app: crawler
     spec:
-      imagePullSecrets: 
-        - name: myregistrykey
       containers:
       - name: crawler
-        # image: mongo:latest
-        image: tig4605246/ubuntu_util:0.2
+        image: siriuskoan/crawler
         ports:
-        - containerPort: 80
+        - containerPort: 3000
           name: crawler
-        resources:
-          requests:
-            cpu: 1
-            memory: 1Gi
-          limits:
-            cpu: 1
-            memory: 1Gi

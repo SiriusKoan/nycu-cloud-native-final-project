@@ -1,24 +1,19 @@
 import requests
+from time import sleep
 import urllib
 import pandas as pd
 from requests_html import HTML
 from requests_html import HTMLSession
 from bs4 import BeautifulSoup
+from flask import Flask, send_file
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-#nltk.download()
 
 class GoogleCrawler():
-    
     def __init__(self):
         self.url = 'https://www.google.com/search?q='    
-    #  URL 萃取 From Google Search上 , using 第三方套件
-    #  https://python-googlesearch.readthedocs.io/en/latest/
-    def google_url_search_byOpenSource(query,tbs='qdr:m',num=10):
-        array_url = [url for url in search('tsmc', tbs='qdr:m' , num=10)]
-        return array_url
-    # 網路擷取器
+
     def get_source(self,url):
         try:
             session = HTMLSession()
@@ -26,36 +21,20 @@ class GoogleCrawler():
             return response
         except requests.exceptions.RequestException as e:
             print(e)
-    # URL 萃取 From Google Search上
-    def scrape_google(self,query):
 
-        response = self.get_source(self.url + query)
-        links = list(response.html.absolute_links)
-        google_domains = ('https://www.google.', 
-                          'https://google.', 
-                          'https://webcache.googleusercontent.', 
-                          'http://webcache.googleusercontent.', 
-                          'https://policies.google.',
-                          'https://support.google.',
-                          'https://maps.google.')
-
-        for url in links[:]:
-            if url.startswith(google_domains):
-                links.remove(url)
-        return links
-    
-# URL萃取器，有link之外，也有標題
-#     qdr:h (past hour)
-#     qdr:d (past day)
-#     qdr:w (past week)
-#     qdr:m (past month)
-#     qdr:y (past year)
+    # URL萃取器，有link之外，也有標題
+    #     qdr:h (past hour)
+    #     qdr:d (past day)
+    #     qdr:w (past week)
+    #     qdr:m (past month)
+    #     qdr:y (past year)
     def google_search(self,query,timeline='',page='0'):
         url = self.url + query + '&tbs={timeline}&lr=lang_en'.format(timeline=timeline)
         #url = self.url + query + '&tbs={timeline}&start={page}&lr=lang_en&tbm=nws'.format(timeline=timeline,page=page)
         print('[Check][URL] URL : {url}'.format(url=url))
         response = self.get_source(url)
         return self.parse_googleResults(response)
+
     # Google Search Result Parsing
     def parse_googleResults(self,response):
 
@@ -75,11 +54,10 @@ class GoogleCrawler():
             output.append(item)
         return output
     
-    # 網頁解析器
     def html_parser(self,htmlText):
         soup = BeautifulSoup(htmlText, 'html.parser')
         return soup
-    # 解析後，取<p>文字
+
     def html_getText(self,soup):
         orignal_text = ''
         for el in soup.find_all('p'):
@@ -99,6 +77,7 @@ class GoogleCrawler():
                 else:
                     counts[word] = 1
         return counts
+
     def get_wordcount_json(self,whitelist , dict_data):
         data_array = []
         for i in whitelist:
@@ -109,35 +88,50 @@ class GoogleCrawler():
             }
             data_array.append(json_data)
         return data_array
+
     def jsonarray_toexcel(self,data_array):
         df = pd.DataFrame(data=data_array)
         df.to_excel('result.xlsx' , index=False)
         return
-    
-if __name__ == "__main__":
-    #query = "TSMC ASML"
-    #query = "TSMC SUMCO ASML Applied Materials"
-    queries = ["TSMC", "SUMCO", "ASML", "Applied Materials"]
-    final_result = []
-    for query in queries:
-        crawler = GoogleCrawler()
-        results = crawler.google_search(query , 'qdr:m')
-        for res in results:
-            print(res['title'])
-            Target_URL = res['link']
-            response = crawler.get_source(Target_URL)
-            soup = crawler.html_parser(response.text)
-            orignal_text = crawler.html_getText(soup)
-            #print(orignal_text)
-            result_wordcount = crawler.word_count(orignal_text)
-            whitelist = ['TSMC', 'SUMCO', 'ASML', 'Applied Materials']
-            result = crawler.get_wordcount_json(whitelist, result_wordcount)
-            print(result)
-            if final_result:
-                for i in range(4):
-                    final_result[i]['Count'] += result[i]['Count']
-            else:
-                final_result = result
-    print(final_result)
-    crawler.jsonarray_toexcel(final_result)
-    print('Excel is OK')
+
+app = Flask(__name__)
+
+@app.route("/run")
+def crawler_endpoint():
+    try:
+        nltk.download('popular')
+        #query = "TSMC ASML"
+        #query = "TSMC SUMCO ASML Applied Materials"
+        queries = ["TSMC", "SUMCO", "ASML", "Applied Materials"]
+        final_result = []
+        for query in queries:
+            crawler = GoogleCrawler()
+            results = crawler.google_search(query , 'qdr:m')
+            for res in results:
+                print(res['title'])
+                Target_URL = res['link']
+                response = crawler.get_source(Target_URL)
+                soup = crawler.html_parser(response.text)
+                orignal_text = crawler.html_getText(soup)
+                #print(orignal_text)
+                result_wordcount = crawler.word_count(orignal_text)
+                whitelist = ['TSMC', 'SUMCO', 'ASML', 'Applied Materials']
+                result = crawler.get_wordcount_json(whitelist, result_wordcount)
+                print(result)
+                if final_result:
+                    for i in range(4):
+                        final_result[i]['Count'] += result[i]['Count']
+                else:
+                    final_result = result
+        print(final_result)
+        crawler.jsonarray_toexcel(final_result)
+        print('Excel is OK')
+        return send_file("/crawler/result.xlsx")
+    except Exception as e:
+        return str(e)
+
+@app.route("/test")
+def test_page():
+    return "OK"
+
+app.run(host="0.0.0.0")

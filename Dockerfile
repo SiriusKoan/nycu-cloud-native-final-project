@@ -1,5 +1,5 @@
 FROM python:3.6.15-slim
-COPY . /sample_crawler
-WORKDIR /sample_crawler
+COPY . /crawler
+WORKDIR /crawler
 RUN pip install -r ./requirements.txt
-CMD ["python","crawler_sample.py"]
+CMD ["python", "crawler.py"]

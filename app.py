@@ -6,7 +6,7 @@ app = Flask(__name__)
 @app.route("/run")
 def crawler_endpoint():
     try:
-	run_crawler()
+        run_crawler()
         return send_file("/crawler/result.xlsx")
     except Exception as e:
         return str(e)

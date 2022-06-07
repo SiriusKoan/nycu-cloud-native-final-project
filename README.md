@@ -9,6 +9,7 @@ Setup grafana for monitoring and crawler application.
 ```
 $ kubectl apply -f applications/crawler-app.yaml
 $ kubectl apply -f applications/grafana.yaml
+$ kubectl apply -f applications/prometheus.yaml
 ```
 
 ## Usage

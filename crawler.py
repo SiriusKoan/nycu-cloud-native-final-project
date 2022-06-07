@@ -1,11 +1,9 @@
 import requests
-from time import sleep
 import urllib
 import pandas as pd
 from requests_html import HTML
 from requests_html import HTMLSession
 from bs4 import BeautifulSoup
-from flask import Flask, send_file
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -13,6 +11,22 @@ from nltk.tokenize import word_tokenize
 class GoogleCrawler():
     def __init__(self):
         self.url = 'https://www.google.com/search?q='    
+
+    def scrape_google(self,query):
+        response = self.get_source(self.url + query)
+        links = list(response.html.absolute_links)
+        google_domains = ('https://www.google.', 
+                          'https://google.', 
+                          'https://webcache.googleusercontent.', 
+                          'http://webcache.googleusercontent.', 
+                          'https://policies.google.',
+                          'https://support.google.',
+                          'https://maps.google.')
+
+        for url in links[:]:
+            if url.startswith(google_domains):
+                links.remove(url)
+        return links
 
     def get_source(self,url):
         try:
@@ -94,44 +108,32 @@ class GoogleCrawler():
         df.to_excel('result.xlsx' , index=False)
         return
 
-app = Flask(__name__)
+def run_crawler():
+    nltk.download('popular')
+    #query = "TSMC ASML"
+    #query = "TSMC SUMCO ASML Applied Materials"
+    queries = ["TSMC", "SUMCO", "ASML", "Applied Materials"]
+    final_result = []
+    for query in queries:
+        crawler = GoogleCrawler()
+        results = crawler.google_search(query , 'qdr:m')
+        for res in results:
+            print(res['title'])
+            Target_URL = res['link']
+            response = crawler.get_source(Target_URL)
+            soup = crawler.html_parser(response.text)
+            orignal_text = crawler.html_getText(soup)
+            #print(orignal_text)
+            result_wordcount = crawler.word_count(orignal_text)
+            whitelist = ['TSMC', 'SUMCO', 'ASML', 'Applied Materials']
+            result = crawler.get_wordcount_json(whitelist, result_wordcount)
+            print(result)
+            if final_result:
+                for i in range(4):
+                    final_result[i]['Count'] += result[i]['Count']
+            else:
+                final_result = result
+    print(final_result)
+    crawler.jsonarray_toexcel(final_result)
+    print('Excel is OK')
 
-@app.route("/run")
-def crawler_endpoint():
-    try:
-        nltk.download('popular')
-        #query = "TSMC ASML"
-        #query = "TSMC SUMCO ASML Applied Materials"
-        queries = ["TSMC", "SUMCO", "ASML", "Applied Materials"]
-        final_result = []
-        for query in queries:
-            crawler = GoogleCrawler()
-            results = crawler.google_search(query , 'qdr:m')
-            for res in results:
-                print(res['title'])
-                Target_URL = res['link']
-                response = crawler.get_source(Target_URL)
-                soup = crawler.html_parser(response.text)
-                orignal_text = crawler.html_getText(soup)
-                #print(orignal_text)
-                result_wordcount = crawler.word_count(orignal_text)
-                whitelist = ['TSMC', 'SUMCO', 'ASML', 'Applied Materials']
-                result = crawler.get_wordcount_json(whitelist, result_wordcount)
-                print(result)
-                if final_result:
-                    for i in range(4):
-                        final_result[i]['Count'] += result[i]['Count']
-                else:
-                    final_result = result
-        print(final_result)
-        crawler.jsonarray_toexcel(final_result)
-        print('Excel is OK')
-        return send_file("/crawler/result.xlsx")
-    except Exception as e:
-        return str(e)
-
-@app.route("/test")
-def test_page():
-    return "OK"
-
-app.run(host="0.0.0.0")

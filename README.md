@@ -47,3 +47,6 @@ Get test coverage.
 ```
 $ python -m pytest . tests --doctest-modules --junitxml=test-results.xml
 ```
+
+## Infrastructure Diagram
+![image](https://user-images.githubusercontent.com/26023540/172416820-d3600578-f5e9-4df0-9506-4837b24d6da8.png)

@@ -1,3 +1,4 @@
+from datetime import datetime
 import requests
 import urllib
 import pandas as pd
@@ -96,7 +97,7 @@ class GoogleCrawler():
         data_array = []
         for i in whitelist:
             json_data = {
-                'Date' : 'Week1',
+                'Date' : datetime.strftime(datetime.now(), "%Y/%m/%d"),
                 'Company' : i , 
                 'Count' : dict_data.get(i, 0)
             }

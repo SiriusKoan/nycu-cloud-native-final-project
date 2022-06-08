@@ -35,7 +35,7 @@ curl localhost:8080/run -o /home/user/result.xlsx
 kill $(ps aux | grep port-forward | awk '{print $2}'
 ```
 
-## Modification
+## Customization
 If you want to update to code, please re-build the Docker image and push it to docker image registry.
 ```
 $ docker build . -t {account}/{image}

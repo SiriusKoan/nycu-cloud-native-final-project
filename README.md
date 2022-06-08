@@ -28,6 +28,13 @@ If the server returns errors, try to curl `/test` to check whether the server is
 $ curl localhost:8080/test
 ```
 
+If you want to run it automatically, put this script to cronjob.
+```
+kubectl port-forward -n cloudnative svc/crawler-service 8080:5000
+curl localhost:8080/run -o /home/user/result.xlsx
+kill $(ps aux | grep port-forward | awk '{print $2}'
+```
+
 ## Modification
 If you want to update to code, please re-build the Docker image and push it to docker image registry.
 ```

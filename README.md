@@ -56,4 +56,4 @@ $ python -m pytest . tests --doctest-modules --junitxml=test-results.xml
 ```
 
 ## Infrastructure Diagram
-![image](https://user-images.githubusercontent.com/26023540/172416820-d3600578-f5e9-4df0-9506-4837b24d6da8.png)
+![image](https://user-images.githubusercontent.com/26023540/173837114-caeeda99-f437-4d8a-8028-8195860cbce7.png)
